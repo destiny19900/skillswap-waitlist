@@ -86,16 +86,17 @@ export default function TestFirebase() {
           <div className="text-xs text-gray-400 bg-dark-950 p-3 rounded overflow-auto max-h-60">
             <pre>Note: If tests fail, you may need to update Firestore security rules in Firebase Console:</pre>
             <pre>{`
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      // For testing only - change this for production
-      allow read, write: if true;
-    }
-  }
-}
-            `}</pre>
+                  rules_version = '2';
+                  service cloud.firestore {
+                    match /databases/{database}/documents {
+                      match /{document=**} {
+                        // For testing only - change this for production
+                        allow read, write: if true;
+                      }
+                    }
+                  }
+                `}
+            </pre>
           </div>
         </div>
       </div>

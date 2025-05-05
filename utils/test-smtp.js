@@ -63,7 +63,7 @@ async function testSMTP() {
     console.log('\nSending test email...');
     const info = await transporter.sendMail({
       from: process.env.SMTP_FROM || 'Test <test@example.com>',
-      to: 'alvintye22@gmail.com',
+      to: 'skillpod@buildera.dev',
       subject: 'SMTP Test Email',
       text: 'If you receive this, SMTP is working correctly!',
       html: '<b>If you receive this, SMTP is working correctly!</b>',

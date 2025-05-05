@@ -43,7 +43,7 @@ export async function GET() {
     try {
       const info = await transporter.sendMail({
         from: process.env.SMTP_FROM || 'Test <test@example.com>',
-        to: 'alvintye22@gmail.com',
+        to: 'skillpod@buildera.dev',
         subject: 'API Test Email',
         text: 'If you receive this, SMTP API test is working!',
         html: '<b>If you receive this, SMTP API test is working!</b>',
