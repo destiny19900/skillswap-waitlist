@@ -1,11 +1,7 @@
-// This file acts as a compatibility layer to maintain existing imports
-// Don't change any imports in components to keep backward compatibility
-
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
-// Your web app's Firebase configuration
-// Using NEXT_PUBLIC for client-side access
+// Client-side Firebase configuration - uses NEXT_PUBLIC environment variables
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,

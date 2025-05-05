@@ -49,6 +49,7 @@ const skillOptions = [
 ];
 
 const WaitlistForm = () => {
+  const { incrementWaitlistCount } = useWaitlist();
   const [formData, setFormData] = useState<FormData>(initialFormState);
   const [currentStep, setCurrentStep] = useState<FormStep>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,9 +65,6 @@ const WaitlistForm = () => {
     name: '',
     email: '',
   });
-  
-  // Get waitlist context to increment count
-  const { incrementWaitlistCount } = useWaitlist();
   
   const ref = useRef(null);
   const isInView = useInView(ref, { once: false, amount: 0.3 });
@@ -824,7 +822,7 @@ const WaitlistForm = () => {
         throw new Error(data.error || 'Failed to submit form');
       }
       
-      // Increment the global waitlist count
+      // Increment the global waitlist counter
       incrementWaitlistCount();
       
       // Show success state

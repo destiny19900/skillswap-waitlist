@@ -4,6 +4,7 @@ import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { Code, Lightbulb, Palette, Users } from 'lucide-react';
 import Image from 'next/image';
+import { getInViewProps } from '@/utils/animation';
 
 interface SkillCategoryProps {
   icon: React.ReactNode;
@@ -15,7 +16,7 @@ interface SkillCategoryProps {
 
 const SkillCategory: React.FC<SkillCategoryProps> = ({ icon, title, skills, index, backgroundImage }) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, amount: 0.2 });
+  const isInView = useInView(ref, getInViewProps(0.2));
   
   return (
     <motion.div
@@ -71,7 +72,7 @@ const SkillCategory: React.FC<SkillCategoryProps> = ({ icon, title, skills, inde
 
 const SkillCategories = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, amount: 0.1 });
+  const isInView = useInView(ref, getInViewProps(0.1));
   
   const skillCategories = [
     {

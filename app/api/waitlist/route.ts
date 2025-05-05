@@ -16,8 +16,6 @@ export async function POST(request: Request) {
       );
     }
     
-    console.log('🔍 Processing waitlist submission from:', email, 'with waitlist position:', waitlistRank);
-    
     // ====== STEP 1: SEND EMAIL CONFIRMATION FIRST ======
     // Configure email transporter with SMTP credentials from .env.local
     const transportConfig = {
@@ -31,31 +29,15 @@ export async function POST(request: Request) {
       tls: {
         rejectUnauthorized: false // Allow self-signed certificates
       },
-      debug: true // Enable debug mode for troubleshooting
+      debug: false // Disable debug mode for production
     };
-    
-    console.log('📧 SMTP Configuration:', {
-      host: transportConfig.host,
-      port: transportConfig.port,
-      secure: transportConfig.secure,
-      user: transportConfig.auth.user,
-      from: process.env.SMTP_FROM,
-      to: email
-    });
     
     const transporter = nodemailer.createTransport(transportConfig);
     
     // Verify SMTP connection first
     try {
-      console.log('🔄 Verifying SMTP connection...');
-      const verifyResult = await transporter.verify();
-      console.log('✅ SMTP connection verified successfully:', verifyResult);
+      await transporter.verify();
     } catch (verifyError: any) {
-      console.error('❌ SMTP verification failed:', {
-        error: verifyError.message,
-        code: verifyError.code,
-        stack: verifyError.stack
-      });
       return NextResponse.json(
         { 
           error: `SMTP connection failed: ${verifyError.message}`,
@@ -124,29 +106,15 @@ export async function POST(request: Request) {
       `,
     };
     
-    console.log('✉️ Attempting to send waitlist confirmation email to:', email);
-    
     // Send the email
     let emailSuccess = false;
     let emailId = '';
     
     try {
       const info = await transporter.sendMail(mailOptions);
-      console.log('✅ Waitlist confirmation email sent successfully:', {
-        messageId: info.messageId,
-        accepted: info.accepted,
-        rejected: info.rejected,
-        response: info.response
-      });
       emailSuccess = true;
       emailId = info.messageId;
     } catch (error: any) {
-      console.error('❌ Error sending waitlist confirmation email:', {
-        error: error.message,
-        code: error.code,
-        stack: error.stack,
-        response: error.response
-      });
       return NextResponse.json(
         { 
           error: `Failed to send confirmation email: ${error.message}`,
@@ -161,8 +129,6 @@ export async function POST(request: Request) {
     let firestoreId = '';
     
     try {
-      console.log('💾 Attempting to add user to Firestore waitlist collection...');
-      
       const docRef = await addDoc(collection(db, 'waitlist'), {
         name,
         email,
@@ -181,15 +147,23 @@ export async function POST(request: Request) {
         emailId: emailId,
       });
       
-      console.log('✅ Successfully added to Firestore with ID:', docRef.id);
       firestoreSuccess = true;
       firestoreId = docRef.id;
+      
+      // Trigger a waitlist count refresh
+      try {
+        // This will update the global counter by calling the count API
+        await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || ''}/api/waitlist/count`, {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        });
+      } catch (countError) {
+        console.error('Failed to refresh waitlist count, but registration succeeded:', countError);
+        // Don't fail the request if this doesn't work
+      }
     } catch (error: any) {
-      console.error('❌ Error adding to Firestore:', {
-        error: error.message,
-        code: error.code,
-        stack: error.stack
-      });
       // Even if Firestore fails, we still return success since email was sent
       return NextResponse.json({ 
         partialSuccess: true,
@@ -208,11 +182,6 @@ export async function POST(request: Request) {
     });
     
   } catch (error: any) {
-    console.error('❌ Waitlist submission general error:', {
-      error: error.message,
-      code: error.code,
-      stack: error.stack
-    });
     return NextResponse.json(
       { 
         error: 'Failed to process waitlist request',

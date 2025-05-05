@@ -2,60 +2,64 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Default deny all access
-    match /{document=**} {
-      allow read, write: if false;
-    }
-    
-    // Waitlist collection - allow create but restrict read access
-    match /waitlist/{waitlistId} {
-      // Allow creating new waitlist entries
+    // Waitlist collection with proper validation
+    match /waitlist/{document} {
+      // Allow reading waitlist entries only from server-side (using admin SDK)
+      // Client-side reads are denied for privacy/security
+      allow read: if false;
+      
+      // Allow creating new entries with validation
       allow create: if 
-        // Required fields exist
+        // Required fields validation
         request.resource.data.name is string &&
         request.resource.data.email is string &&
         
-        // Validate email format
+        // Email format validation with regex
         request.resource.data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$') &&
         
-        // Prevent fake entries with invalid names
-        request.resource.data.name.size() > 1;
+        // Name length validation
+        request.resource.data.name.size() >= 2 &&
+        
+        // Skills validation
+        (
+          (!('learningSkills' in request.resource.data) || request.resource.data.learningSkills is list) &&
+          (!('teachingSkills' in request.resource.data) || request.resource.data.teachingSkills is list)
+        ) &&
+        
+        // Prevent spam submissions
+        (!exists(/databases/$(database)/documents/waitlist/$(request.resource.id)));
       
-      // Only allow reading your own submissions
-      allow read: if request.auth != null && 
-                  resource.data.email == request.auth.token.email;
-                  
-      // No updates or deletes allowed by clients
-      allow update, delete: if false;
-    }
-    
-    // Admin access for authorized admins only
-    match /waitlist/{waitlistId} {
-      allow read: if request.auth != null && 
-                  request.auth.token.email in [
-                    'admin@skillpod.app'
-                    // Add more admin emails as needed
-                  ];
+      // No client-side updates allowed
+      allow update: if false;
+      
+      // No client-side deletions allowed
+      allow delete: if false;
     }
     
     // Contact form submissions
-    match /contacts/{contactId} {
-      // Allow creating new contact submissions
+    match /contacts/{document} {
+      // Only allow creation with validation
       allow create: if 
-        // Required fields exist
+        // Required fields validation
         request.resource.data.name is string &&
         request.resource.data.email is string &&
         request.resource.data.message is string &&
         
-        // Validate email format
+        // Email format validation
         request.resource.data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$') &&
         
-        // Prevent fake entries with invalid names or empty messages
-        request.resource.data.name.size() > 1 &&
-        request.resource.data.message.size() > 5;
+        // Length validations to prevent spam
+        request.resource.data.name.size() >= 2 &&
+        request.resource.data.message.size() >= 10 &&
+        request.resource.data.message.size() <= 5000;
       
-      // No read, update or delete by clients
+      // No read, update or delete allowed from client
       allow read, update, delete: if false;
+    }
+    
+    // Default: deny all other access
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 } 

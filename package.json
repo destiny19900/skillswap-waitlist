@@ -9,8 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.2",
     "dotenv": "^16.5.0",
     "firebase": "^10.14.1",
+    "firebase-admin": "^13.3.0",
     "framer-motion": "^11.18.2",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.335.0",
