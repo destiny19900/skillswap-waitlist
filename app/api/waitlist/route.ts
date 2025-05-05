@@ -111,7 +111,7 @@ export async function POST(request: Request) {
           </p>
           
           <p style="font-size: 16px; line-height: 1.6; margin-bottom: 30px; color: #1a1b1e;">
-            If you have any questions, feel free to reach out to us at <a href="mailto:support@skillpod.app" style="color: #7e42f5;">support@skillpod.app</a>.
+            If you have any questions, feel free to reach out to us at <a href="mailto:skillpod@buildera.dev" style="color: #7e42f5;">skillpod@buildera.dev</a>.
           </p>
           
           <div style="text-align: center; border-top: 1px solid #e5e7eb; padding-top: 20px; color: #6b7280;">

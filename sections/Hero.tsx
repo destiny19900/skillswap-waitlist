@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import React, { useRef, useMemo } from 'react';
+import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import Image from 'next/image';
 import { Users } from 'lucide-react';
@@ -19,6 +19,23 @@ const Hero = () => {
   const scale = useTransform(scrollYProgress, [0, 1], [1, 0.8]);
   const y = useTransform(scrollYProgress, [0, 1], [0, 100]);
 
+  // Motion values for illuminators
+  const illuminator1X = useMotionValue(0);
+  const illuminator1Y = useMotionValue(0);
+  const illuminator2X = useMotionValue(0);
+  const illuminator2Y = useMotionValue(0);
+  const illuminator3X = useMotionValue(0);
+  const illuminator3Y = useMotionValue(0);
+
+  // Spring animations for smoother movement
+  const springConfig = { stiffness: 100, damping: 30 };
+  const illuminator1XSpring = useSpring(illuminator1X, springConfig);
+  const illuminator1YSpring = useSpring(illuminator1Y, springConfig);
+  const illuminator2XSpring = useSpring(illuminator2X, springConfig);
+  const illuminator2YSpring = useSpring(illuminator2Y, springConfig);
+  const illuminator3XSpring = useSpring(illuminator3X, springConfig);
+  const illuminator3YSpring = useSpring(illuminator3Y, springConfig);
+
   const scrollToWaitlist = () => {
     const waitlistSection = document.getElementById('waitlist');
     if (waitlistSection) {
@@ -32,24 +49,58 @@ const Hero = () => {
   return (
     <section ref={ref} className="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-b from-dark-900 to-dark-800 pt-20 pb-16">
       {/* Hero background image with overlay */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 overflow-hidden">
         <Image 
           src="/assets/hero.png"
           alt="SkillSwap Hero"
           fill
           priority
           className="object-cover opacity-30"
+          style={{ filter: 'brightness(0.7)' }}
         />
+        
         {/* Dark overlay to ensure text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-dark-900/80 via-dark-900/70 to-dark-800/90"></div>
+        
+        {/* Illumination overlays that follow floating elements */}
+        <motion.div 
+          className="absolute w-[300px] h-[300px] rounded-full pointer-events-none"
+          style={{ 
+            x: illuminator1XSpring, 
+            y: illuminator1YSpring,
+            background: 'radial-gradient(circle, rgba(126, 66, 245, 0.15) 0%, rgba(0,0,0,0) 70%)',
+            mixBlendMode: 'soft-light',
+          }}
+        />
+        
+        <motion.div 
+          className="absolute w-[350px] h-[350px] rounded-full pointer-events-none"
+          style={{ 
+            x: illuminator2XSpring, 
+            y: illuminator2YSpring,
+            background: 'radial-gradient(circle, rgba(245, 110, 66, 0.15) 0%, rgba(0,0,0,0) 70%)',
+            mixBlendMode: 'soft-light',
+          }}
+        />
+        
+        <motion.div 
+          className="absolute w-[250px] h-[250px] rounded-full pointer-events-none"
+          style={{ 
+            x: illuminator3XSpring, 
+            y: illuminator3YSpring,
+            background: 'radial-gradient(circle, rgba(66, 245, 173, 0.15) 0%, rgba(0,0,0,0) 70%)',
+            mixBlendMode: 'soft-light',
+          }}
+        />
       </div>
       
       {/* Background animated elements */}
       <div className="absolute inset-0 overflow-hidden z-0">
         <motion.div 
-          className="absolute top-[20%] right-[15%] w-64 h-64 rounded-full bg-primary-500/30 blur-3xl"
+          className="absolute top-[20%] right-[15%] w-64 h-64 rounded-full bg-primary-500/20 blur-3xl"
           animate={{ 
             x: [0, 30, 0],
+            y: [0, -20, 0],
             opacity: [0.5, 0.7, 0.5],
           }}
           transition={{
@@ -57,11 +108,17 @@ const Hero = () => {
             repeat: Infinity,
             repeatType: "reverse"
           }}
+          onUpdate={(latest) => {
+            // Update illuminator position to follow this element
+            illuminator1X.set(Number(latest.x) + window.innerWidth * 0.65);  
+            illuminator1Y.set(Number(latest.y) + window.innerHeight * 0.2);
+          }}
         />
         <motion.div 
-          className="absolute bottom-[15%] left-[10%] w-72 h-72 rounded-full bg-secondary-500/30 blur-3xl"
+          className="absolute bottom-[15%] left-[10%] w-72 h-72 rounded-full bg-secondary-500/20 blur-3xl"
           animate={{ 
             x: [0, -20, 0],
+            y: [0, 15, 0],
             opacity: [0.4, 0.6, 0.4],
           }}
           transition={{
@@ -70,10 +127,16 @@ const Hero = () => {
             repeatType: "reverse",
             delay: 1
           }}
+          onUpdate={(latest) => {
+            // Update illuminator position to follow this element
+            illuminator2X.set(Number(latest.x) + window.innerWidth * 0.1);  
+            illuminator2Y.set(Number(latest.y) + window.innerHeight * 0.85);
+          }}
         />
         <motion.div 
-          className="absolute top-[40%] left-[25%] w-48 h-48 rounded-full bg-accent-500/30 blur-3xl"
+          className="absolute top-[40%] left-[25%] w-48 h-48 rounded-full bg-accent-500/20 blur-3xl"
           animate={{ 
+            x: [0, 20, 0],
             y: [0, 40, 0],
             opacity: [0.3, 0.5, 0.3],
           }}
@@ -82,6 +145,11 @@ const Hero = () => {
             repeat: Infinity,
             repeatType: "reverse",
             delay: 2
+          }}
+          onUpdate={(latest) => {
+            // Update illuminator position to follow this element
+            illuminator3X.set(Number(latest.x) + window.innerWidth * 0.25);  
+            illuminator3Y.set(Number(latest.y) + window.innerHeight * 0.4);
           }}
         />
       </div>
@@ -145,7 +213,7 @@ const Hero = () => {
             </span>
           </motion.div>
           
-          {/* Waitlist count - with dynamic data */}
+          {/* Waitlist count */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -176,9 +244,9 @@ const Hero = () => {
         </motion.div>
       </motion.div>
 
-      {/* Decorative floating elements - more visible */}
+      {/* Decorative floating elements - now with glowing effect */}
       <motion.div 
-        className="absolute top-1/4 right-[10%] w-16 h-16 rounded-xl border border-primary-500/50 bg-primary-900/60 backdrop-blur-md shadow-lg shadow-primary-500/20 z-1"
+        className="absolute top-1/4 right-[10%] w-16 h-16 rounded-xl border border-primary-500/50 bg-primary-900/60 backdrop-blur-md shadow-lg shadow-primary-500/30 z-1 glow-primary"
         animate={{ 
           y: [0, -15, 0],
           rotate: [0, 5, 0],
@@ -188,9 +256,12 @@ const Hero = () => {
           repeat: Infinity,
           repeatType: "reverse"
         }}
+        style={{
+          boxShadow: '0 0 15px 5px rgba(126, 66, 245, 0.15)'
+        }}
       />
       <motion.div 
-        className="absolute bottom-1/4 left-[15%] w-12 h-12 rounded-full border border-accent-500/50 bg-accent-900/60 backdrop-blur-md shadow-lg shadow-accent-500/20 z-1"
+        className="absolute bottom-1/4 left-[15%] w-12 h-12 rounded-full border border-accent-500/50 bg-accent-900/60 backdrop-blur-md shadow-lg shadow-accent-500/30 z-1 glow-accent"
         animate={{ 
           y: [0, 15, 0],
           x: [0, 10, 0],
@@ -201,9 +272,12 @@ const Hero = () => {
           repeatType: "reverse",
           delay: 1
         }}
+        style={{
+          boxShadow: '0 0 15px 5px rgba(66, 245, 173, 0.15)'
+        }}
       />
       <motion.div 
-        className="absolute top-[60%] right-[20%] w-10 h-10 rounded-lg border border-secondary-500/50 bg-secondary-900/60 backdrop-blur-md shadow-lg shadow-secondary-500/20 z-1"
+        className="absolute top-[60%] right-[20%] w-10 h-10 rounded-lg border border-secondary-500/50 bg-secondary-900/60 backdrop-blur-md shadow-lg shadow-secondary-500/30 z-1 glow-secondary"
         animate={{ 
           y: [0, 10, 0],
           rotate: [0, -5, 0],
@@ -213,6 +287,9 @@ const Hero = () => {
           repeat: Infinity,
           repeatType: "reverse",
           delay: 2
+        }}
+        style={{
+          boxShadow: '0 0 15px 5px rgba(245, 110, 66, 0.15)'
         }}
       />
     </section>
