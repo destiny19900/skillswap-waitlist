@@ -4,10 +4,12 @@ import React, { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import Image from 'next/image';
-import { Info } from 'lucide-react';
+import { Users } from 'lucide-react';
+import { useWaitlist } from '@/utils/WaitlistContext';
 
 const Hero = () => {
   const ref = useRef(null);
+  const { waitlistCount } = useWaitlist();
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end start"]
@@ -23,6 +25,9 @@ const Hero = () => {
       waitlistSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  // Format the number with commas
+  const formattedCount = waitlistCount.toLocaleString();
 
   return (
     <section ref={ref} className="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-b from-dark-900 to-dark-800 pt-20 pb-16">
@@ -119,7 +124,7 @@ const Hero = () => {
               Whether you're a coding wizard, design guru, or cooking expert...
             </p>
             <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
-              Join early users of SkillPod — where your knowledge becomes real income.
+              Join early users of SkillSwap — where your knowledge becomes real income.
             </p>
           </motion.div>
           
@@ -138,6 +143,21 @@ const Hero = () => {
             <span className="bg-dark-800/50 px-4 py-2 rounded-full text-secondary-300 text-sm backdrop-blur-sm">
               💻 Tech skills collecting dust?
             </span>
+          </motion.div>
+          
+          {/* Waitlist count - with dynamic data */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.55 }}
+            className="flex justify-center mb-8"
+          >
+            <div className="bg-dark-700/70 backdrop-blur-sm border border-primary-600/30 rounded-lg py-2 px-4 text-sm flex items-center">
+              <Users size={16} className="text-primary-400 mr-2" />
+              <span className="text-gray-300">
+                <span className="text-primary-300 font-semibold">{formattedCount}</span> people on waitlist
+              </span>
+            </div>
           </motion.div>
           
           <motion.div 

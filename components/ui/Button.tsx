@@ -8,9 +8,10 @@ interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'accent';
   size?: 'sm' | 'md' | 'lg';
   className?: string;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => void;
   type?: 'button' | 'submit' | 'reset';
   disabled?: boolean;
+  href?: string;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -21,6 +22,7 @@ const Button: React.FC<ButtonProps> = ({
   onClick,
   type = 'button',
   disabled = false,
+  href,
 }) => {
   const baseClasses = 'rounded-lg font-medium inline-flex items-center justify-center relative overflow-hidden';
   
@@ -38,6 +40,33 @@ const Button: React.FC<ButtonProps> = ({
   
   const disabledClasses = disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer';
   
+  const buttonContent = (
+    <>
+      {/* Glow effect */}
+      <span className="absolute inset-0 w-full h-full bg-white/10 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
+      {children}
+    </>
+  );
+  
+  // If href is provided, render an anchor tag
+  if (href) {
+    return (
+      <motion.a
+        href={href}
+        whileTap={{ scale: 0.97 }}
+        whileHover={!disabled ? { 
+          scale: 1.02,
+          boxShadow: "0px 0px 8px rgba(24, 144, 255, 0.5)",
+        } : {}}
+        className={`premium-button ${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${disabledClasses} ${className}`}
+        onClick={onClick}
+      >
+        {buttonContent}
+      </motion.a>
+    );
+  }
+  
+  // Otherwise render a button
   return (
     <motion.button
       whileTap={{ scale: 0.97 }}
@@ -50,10 +79,7 @@ const Button: React.FC<ButtonProps> = ({
       type={type}
       disabled={disabled}
     >
-      {/* Glow effect */}
-      <span className="absolute inset-0 w-full h-full bg-white/10 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
-      
-      {children}
+      {buttonContent}
     </motion.button>
   );
 };

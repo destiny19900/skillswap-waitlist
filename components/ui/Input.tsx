@@ -43,7 +43,11 @@ const Input: React.FC<InputProps> = ({
           required={required}
           className={`w-full px-4 py-3 rounded-lg bg-dark-600 border ${
             error ? 'border-red-500' : 'border-dark-500'
-          } focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 text-white ${className}`}
+          } focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 text-white placeholder-gray-400 focus:text-white focus:bg-dark-600 ${className}`}
+          style={{
+            WebkitTextFillColor: 'currentcolor', 
+            caretColor: 'white',
+          }}
         />
         {/* Subtle gradient glow on focus */}
         <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary-500/0 via-primary-500/0 to-secondary-500/0 opacity-0 transition-opacity duration-300 pointer-events-none peer-focus:opacity-100"></div>

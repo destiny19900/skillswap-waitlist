@@ -1,0 +1,61 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny all access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // Waitlist collection - allow create but restrict read access
+    match /waitlist/{waitlistId} {
+      // Allow creating new waitlist entries
+      allow create: if 
+        // Required fields exist
+        request.resource.data.name is string &&
+        request.resource.data.email is string &&
+        
+        // Validate email format
+        request.resource.data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$') &&
+        
+        // Prevent fake entries with invalid names
+        request.resource.data.name.size() > 1;
+      
+      // Only allow reading your own submissions
+      allow read: if request.auth != null && 
+                  resource.data.email == request.auth.token.email;
+                  
+      // No updates or deletes allowed by clients
+      allow update, delete: if false;
+    }
+    
+    // Admin access for authorized admins only
+    match /waitlist/{waitlistId} {
+      allow read: if request.auth != null && 
+                  request.auth.token.email in [
+                    'admin@skillpod.app'
+                    // Add more admin emails as needed
+                  ];
+    }
+    
+    // Contact form submissions
+    match /contacts/{contactId} {
+      // Allow creating new contact submissions
+      allow create: if 
+        // Required fields exist
+        request.resource.data.name is string &&
+        request.resource.data.email is string &&
+        request.resource.data.message is string &&
+        
+        // Validate email format
+        request.resource.data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$') &&
+        
+        // Prevent fake entries with invalid names or empty messages
+        request.resource.data.name.size() > 1 &&
+        request.resource.data.message.size() > 5;
+      
+      // No read, update or delete by clients
+      allow read, update, delete: if false;
+    }
+  }
+} 

@@ -44,11 +44,11 @@ const Footer = () => {
               A fun, flexible, and rewarding learning platform where anyone can learn real-world skills, teach what they know, and earn money.
             </p>
             <div className="flex space-x-4">
-              <SocialIcon icon={<Facebook size={18} />} />
-              <SocialIcon icon={<Twitter size={18} />} />
-              <SocialIcon icon={<Instagram size={18} />} />
-              <SocialIcon icon={<Linkedin size={18} />} />
-              <SocialIcon icon={<Github size={18} />} />
+              <SocialIcon icon={<Facebook size={18} />} href="#" />
+              <SocialIcon icon={<Twitter size={18} />} href="https://twitter.com/Skill_Pod" />
+              <SocialIcon icon={<Instagram size={18} />} href="#" />
+              <SocialIcon icon={<Linkedin size={18} />} href="#" />
+              <SocialIcon icon={<Github size={18} />} href="#" />
             </div>
           </motion.div>
           
@@ -58,12 +58,24 @@ const Footer = () => {
             animate={isInView ? "visible" : "hidden"}
             variants={fadeInUpVariants}
           >
-            <h4 className="text-lg font-medium mb-4 text-white">Platform</h4>
+            <h4 className="text-lg font-medium mb-4 text-white">Connect With Us</h4>
             <ul className="space-y-3">
+              <FooterLink href="https://twitter.com/Skill_Pod">
+                <div className="flex items-center">
+                  <Twitter size={16} className="mr-2 text-[#1DA1F2]" />
+                  <span>Follow us on Twitter</span>
+                </div>
+              </FooterLink>
+              <FooterLink href="https://t.me/skill_pod">
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-[#0088cc]" width="16" height="16">
+                    <path d="M21.5 4.5l-19 9.5L9 17l3.5 3.5L21.5 4.5z"></path>
+                    <path d="M14.5 14.5L9 17"></path>
+                  </svg>
+                  <span>Join our Telegram</span>
+                </div>
+              </FooterLink>
               <FooterLink href="#">How it Works</FooterLink>
-              <FooterLink href="#">Pricing</FooterLink>
-              <FooterLink href="#">Testimonials</FooterLink>
-              <FooterLink href="#">FAQ</FooterLink>
             </ul>
           </motion.div>
           
@@ -112,9 +124,11 @@ const Footer = () => {
   );
 };
 
-const SocialIcon = ({ icon }: { icon: React.ReactNode }) => (
+const SocialIcon = ({ icon, href }: { icon: React.ReactNode; href?: string }) => (
   <a 
-    href="#" 
+    href={href || "#"}
+    target="_blank"
+    rel="noopener noreferrer"
     className="w-8 h-8 rounded-full glass flex items-center justify-center text-gray-400 hover:text-white hover:border-primary-500 transition-all duration-300 hover:scale-110"
   >
     {icon}

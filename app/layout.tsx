@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { WaitlistProvider } from '@/utils/WaitlistContext';
 import './globals.css';
 
 const inter = Inter({ 
@@ -28,7 +29,9 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
-        {children}
+        <WaitlistProvider>
+          {children}
+        </WaitlistProvider>
       </body>
     </html>
   );

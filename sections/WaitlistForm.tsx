@@ -7,6 +7,7 @@ import { db } from '@/utils/firebase';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { CheckCircle, Loader2, SparklesIcon, Twitter, Send, Share2, ArrowRight, ChevronLeft, Search, X, Plus, Facebook, Linkedin, Copy } from 'lucide-react';
+import { useWaitlist } from '@/utils/WaitlistContext';
 
 // Step types
 type FormStep = 1 | 2 | 3 | 4;
@@ -31,7 +32,7 @@ const initialFormState: FormData = {
   learningSkills: [],
   teachingSkills: [],
   wantsToTeach: false,
-  waitlistRank: Math.floor(Math.random() * 100) + 400, // Random starting rank
+  waitlistRank: Math.floor(Math.random() * 980) + 3020, // Between 3020-4000
   points: 0,
   sharedTwitter: false,
   joinedDiscord: false,
@@ -59,6 +60,13 @@ const WaitlistForm = () => {
   const [socialActionMessage, setSocialActionMessage] = useState('');
   const [showSocialOptions, setShowSocialOptions] = useState(false);
   const [clipboardMessage, setClipboardMessage] = useState('');
+  const [errors, setErrors] = useState({
+    name: '',
+    email: '',
+  });
+  
+  // Get waitlist context to increment count
+  const { incrementWaitlistCount } = useWaitlist();
   
   const ref = useRef(null);
   const isInView = useInView(ref, { once: false, amount: 0.3 });
@@ -78,10 +86,34 @@ const WaitlistForm = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value, type, checked } = e.target;
+    
     if (type === 'checkbox') {
+      // Just update the state without any side effects
       setFormData(prev => ({ ...prev, [id]: checked }));
+      // Prevent propagation to avoid any parent forms from auto-submitting
+      e.stopPropagation();
+      e.preventDefault(); 
     } else {
       setFormData(prev => ({ ...prev, [id]: value }));
+      
+      // Validate email
+      if (id === 'email') {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (value && !emailRegex.test(value)) {
+          setErrors(prev => ({ ...prev, email: 'Please enter a valid email address' }));
+        } else {
+          setErrors(prev => ({ ...prev, email: '' }));
+        }
+      }
+      
+      // Validate name
+      if (id === 'name') {
+        if (value && value.length < 2) {
+          setErrors(prev => ({ ...prev, name: 'Name must be at least 2 characters' }));
+        } else {
+          setErrors(prev => ({ ...prev, name: '' }));
+        }
+      }
     }
   };
 
@@ -146,6 +178,13 @@ const WaitlistForm = () => {
   };
 
   const handleSocialAction = (action: 'twitter' | 'discord' | 'invite') => {
+    // Prevent default form submission behavior
+    if (action === 'invite') {
+      // Show social sharing options instead of immediately marking as complete
+      setShowSocialOptions(true);
+      return; // Exit early, points will be added after sharing
+    }
+    
     // In a real app, you'd integrate with social APIs
     // For now, we'll simulate the action
     let pointsToAdd = 0;
@@ -155,7 +194,7 @@ const WaitlistForm = () => {
       setFormData(prev => ({ ...prev, sharedTwitter: true }));
       
       // Copy link to clipboard
-      const shareText = "I just joined the waitlist for @SkillPod - a platform to learn and teach skills while earning! Join me:";
+      const shareText = "I just joined the waitlist for @Skill_Pod - a platform to learn and teach skills while earning! Join me:";
       const shareUrl = window.location.origin;
       copyToClipboard(shareUrl);
       
@@ -169,42 +208,31 @@ const WaitlistForm = () => {
       setFormData(prev => ({ ...prev, joinedDiscord: true }));
       
       // Open Telegram channel link
-      // Replace with your actual Telegram channel link
-      const telegramUrl = 'https://t.me/skillpod_community';
+      const telegramUrl = 'https://t.me/skill_pod';
       window.open(telegramUrl, '_blank');
       
       setSocialActionMessage('Opening Telegram channel...');
-    } else if (action === 'invite' && !formData.invitedFriends) {
-      // Show social sharing options instead of immediately marking as complete
-      setShowSocialOptions(true);
-      return; // Exit early, points will be added after sharing
     }
     
     if (pointsToAdd > 0) {
       const newPoints = formData.points + pointsToAdd;
-      const newRank = Math.max(formData.waitlistRank - Math.floor(pointsToAdd / 5), 1);
+      const newRank = Math.max(formData.waitlistRank - Math.floor(pointsToAdd / 5), 3020); // Set minimum rank to 3020
       
       setFormData(prev => ({
         ...prev,
         points: newPoints,
         waitlistRank: newRank
       }));
-      
-      // Check if all social tasks are completed after this one
-      const allTasksCompleted = 
-        (action === 'twitter' || formData.sharedTwitter) && 
-        (action === 'discord' || formData.joinedDiscord) && 
-        (action === 'invite' || formData.invitedFriends);
-      
-      // Don't auto-submit even if all tasks are completed
-      // This now requires manual submission regardless
     }
   };
 
   // Function to handle sharing via different platforms
   const handleShare = (platform: string) => {
+    // Create share message with flier image
     const shareUrl = window.location.origin;
     const shareText = "Join me on SkillPod - where you can learn and teach skills while earning!";
+    const twitterText = "Join me on @Skill_Pod - where you can learn and teach skills while earning! Follow our journey.";
+    const flierImageUrl = `${window.location.origin}/assets/flier.png`;
     
     // Copy the URL to clipboard first
     copyToClipboard(shareUrl);
@@ -213,16 +241,19 @@ const WaitlistForm = () => {
     let shareLink = '';
     switch (platform) {
       case 'facebook':
-        shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+        shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&picture=${encodeURIComponent(flierImageUrl)}`;
         break;
       case 'twitter':
-        shareLink = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+        shareLink = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}&url=${encodeURIComponent(shareUrl)}`;
         break;
       case 'linkedin':
         shareLink = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
         break;
       case 'telegram':
         shareLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+        break;
+      case 'whatsapp':
+        shareLink = `https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`;
         break;
       case 'copy':
         // Already copied to clipboard above
@@ -240,7 +271,7 @@ const WaitlistForm = () => {
     if (!formData.invitedFriends) {
       const pointsToAdd = 30;
       const newPoints = formData.points + pointsToAdd;
-      const newRank = Math.max(formData.waitlistRank - Math.floor(pointsToAdd / 5), 1);
+      const newRank = Math.max(formData.waitlistRank - Math.floor(pointsToAdd / 5), 3001);
       
       setFormData(prev => ({
         ...prev,
@@ -263,46 +294,6 @@ const WaitlistForm = () => {
   const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(prev => (prev - 1) as FormStep);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError('');
-
-    try {
-      // Add to Firestore
-      await addDoc(collection(db, 'waitlist'), {
-        name: formData.name,
-        email: formData.email,
-        learningSkills: formData.learningSkills,
-        teachingSkills: formData.teachingSkills,
-        wantsToTeach: formData.wantsToTeach,
-        waitlistRank: formData.waitlistRank,
-        points: formData.points,
-        socialActions: {
-          sharedTwitter: formData.sharedTwitter,
-          joinedDiscord: formData.joinedDiscord,
-          invitedFriends: formData.invitedFriends,
-        },
-        createdAt: new Date().toISOString(),
-      });
-
-      // Show success state
-      setIsSuccess(true);
-      
-      // Reset form after 5 seconds
-      setTimeout(() => {
-        setFormData(initialFormState);
-        setIsSuccess(false);
-        setCurrentStep(1);
-      }, 5000);
-    } catch (err) {
-      setError('Something went wrong. Please try again.');
-      console.error(err);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -329,6 +320,7 @@ const WaitlistForm = () => {
               onChange={handleChange}
               placeholder="Your full name"
               required
+              error={errors.name}
             />
             <Input
               id="email"
@@ -338,16 +330,39 @@ const WaitlistForm = () => {
               onChange={handleChange}
               placeholder="Your email address"
               required
+              error={errors.email}
             />
-            <div className="flex items-center space-x-2 mt-4">
+            <div className="flex items-center space-x-2 mt-4" onClick={(e) => {
+              e.preventDefault(); 
+              e.stopPropagation();
+            }}>
               <input
                 id="wantsToTeach"
                 type="checkbox"
                 checked={formData.wantsToTeach}
-                onChange={handleChange}
-                className="w-4 h-4 accent-primary-500 bg-dark-700 border-dark-500 rounded"
+                onChange={(e) => {
+                  // Prevent default behavior of form submission
+                  e.preventDefault();
+                  e.stopPropagation();
+                  // Directly set form data instead of using handleChange to avoid any side effects
+                  setFormData(prev => ({ ...prev, wantsToTeach: !prev.wantsToTeach }));
+                }}
+                className="w-4 h-4 accent-primary-500 bg-dark-700 border-dark-500 rounded focus:ring-primary-500 text-primary-500"
+                onClick={(e) => e.stopPropagation()} // Prevent clicks from bubbling up
+                style={{ 
+                  colorScheme: 'dark',
+                  accentColor: 'var(--primary-500, #7e42f5)'
+                }}
               />
-              <label htmlFor="wantsToTeach" className="text-gray-300">
+              <label 
+                htmlFor="wantsToTeach" 
+                className="text-gray-300"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setFormData(prev => ({ ...prev, wantsToTeach: !prev.wantsToTeach }));
+                }}
+              >
                 I want to both teach and learn
               </label>
             </div>
@@ -371,7 +386,11 @@ const WaitlistForm = () => {
                   value={skillInput}
                   onChange={handleSkillInput}
                   placeholder="Search skills or add your own"
-                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-dark-600 border border-dark-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 text-white"
+                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-dark-600 border border-dark-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 text-white placeholder-gray-400 focus:text-white focus:bg-dark-600"
+                  style={{
+                    WebkitTextFillColor: 'currentcolor',
+                    caretColor: 'white',
+                  }}
                   onFocus={() => setShowSkillDropdown(true)}
                 />
                 <button
@@ -450,7 +469,11 @@ const WaitlistForm = () => {
                   value={skillInput}
                   onChange={handleSkillInput}
                   placeholder="Search skills or add your own"
-                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-dark-600 border border-dark-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 text-white"
+                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-dark-600 border border-dark-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 text-white placeholder-gray-400 focus:text-white focus:bg-dark-600"
+                  style={{
+                    WebkitTextFillColor: 'currentcolor',
+                    caretColor: 'white',
+                  }}
                   onFocus={() => setShowSkillDropdown(true)}
                 />
                 <button
@@ -606,7 +629,7 @@ const WaitlistForm = () => {
         >
           <div className="flex items-center">
             <Send className="mr-3" size={18} />
-            <span>Join our Telegram</span>
+            <span>Join our Telegram Channel</span>
           </div>
           <span className={formData.joinedDiscord ? 'text-primary-300' : 'text-primary-400'}>
             {formData.joinedDiscord ? 'Completed +15pts' : '+15 pts'}
@@ -615,7 +638,12 @@ const WaitlistForm = () => {
         
         <div>
           <button
-            onClick={() => handleSocialAction('invite')}
+            type="button"
+            onClick={(e) => {
+              e?.preventDefault();
+              e?.stopPropagation();
+              handleSocialAction('invite');
+            }}
             disabled={formData.invitedFriends}
             className={`w-full flex items-center justify-between p-3 rounded-lg ${
               formData.invitedFriends 
@@ -643,31 +671,69 @@ const WaitlistForm = () => {
               <p className="text-sm text-gray-300 mb-3">Share via:</p>
               <div className="flex flex-wrap justify-center gap-3">
                 <button 
-                  onClick={() => handleShare('facebook')}
+                  type="button"
+                  onClick={(e) => {
+                    e?.preventDefault();
+                    e?.stopPropagation();
+                    handleShare('facebook');
+                  }}
                   className="w-9 h-9 rounded-full bg-[#3b5998] flex items-center justify-center text-white hover:opacity-90 transition-opacity"
                 >
                   <Facebook size={18} />
                 </button>
                 <button 
-                  onClick={() => handleShare('twitter')}
+                  type="button"
+                  onClick={(e) => {
+                    e?.preventDefault();
+                    e?.stopPropagation();
+                    handleShare('twitter');
+                  }}
                   className="w-9 h-9 rounded-full bg-[#1da1f2] flex items-center justify-center text-white hover:opacity-90 transition-opacity"
                 >
                   <Twitter size={18} />
                 </button>
                 <button 
-                  onClick={() => handleShare('linkedin')}
+                  type="button"
+                  onClick={(e) => {
+                    e?.preventDefault();
+                    e?.stopPropagation();
+                    handleShare('linkedin');
+                  }}
                   className="w-9 h-9 rounded-full bg-[#0077b5] flex items-center justify-center text-white hover:opacity-90 transition-opacity"
                 >
                   <Linkedin size={18} />
                 </button>
                 <button 
-                  onClick={() => handleShare('telegram')}
+                  type="button"
+                  onClick={(e) => {
+                    e?.preventDefault();
+                    e?.stopPropagation();
+                    handleShare('telegram');
+                  }}
                   className="w-9 h-9 rounded-full bg-[#0088cc] flex items-center justify-center text-white hover:opacity-90 transition-opacity"
                 >
                   <Send size={18} />
                 </button>
                 <button 
-                  onClick={() => handleShare('copy')}
+                  type="button"
+                  onClick={(e) => {
+                    e?.preventDefault();
+                    e?.stopPropagation();
+                    handleShare('whatsapp');
+                  }}
+                  className="w-9 h-9 rounded-full bg-[#25D366] flex items-center justify-center text-white hover:opacity-90 transition-opacity"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                  </svg>
+                </button>
+                <button 
+                  type="button"
+                  onClick={(e) => {
+                    e?.preventDefault();
+                    e?.stopPropagation();
+                    handleShare('copy');
+                  }}
                   className="w-9 h-9 rounded-full bg-dark-500 flex items-center justify-center text-white hover:opacity-90 transition-opacity"
                 >
                   <Copy size={18} />
@@ -694,6 +760,88 @@ const WaitlistForm = () => {
       </div>
     </div>
   );
+
+  const calculatePoints = () => {
+    let points = 0;
+    if (formData.sharedTwitter) points += 25;
+    if (formData.joinedDiscord) points += 15;
+    if (formData.invitedFriends) points += 30;
+    return points;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError('');
+    
+    try {
+      // Validate form
+      if (!formData.name || !formData.email) {
+        setError('Please fill in all required fields');
+        return;
+      }
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        setError('Please enter a valid email address');
+        return;
+      }
+      
+      // Validate skills
+      if (formData.learningSkills.length === 0 && formData.teachingSkills.length === 0) {
+        setError('Please add at least one skill you want to learn or teach');
+        return;
+      }
+      
+      // Generate waitlist rank
+      const waitlistRank = Math.floor(Math.random() * (4000 - 3020 + 1)) + 3020;
+      
+      // Calculate points
+      const points = calculatePoints();
+      
+      // Submit to API
+      const response = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          waitlistRank,
+          points,
+          socialActions: {
+            sharedTwitter: false,
+            joinedDiscord: false,
+            invitedFriends: false
+          }
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit form');
+      }
+      
+      // Increment the global waitlist count
+      incrementWaitlistCount();
+      
+      // Show success state
+      setIsSuccess(true);
+      
+      // Reset form
+      setFormData(initialFormState);
+      setCurrentStep(1);
+      setSkillInput('');
+      setShowSkillDropdown(false);
+      
+    } catch (err: any) {
+      setError(err.message || 'An error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <section ref={ref} id="waitlist" className="section bg-dark-800">
@@ -748,58 +896,41 @@ const WaitlistForm = () => {
                 </div>
               )}
 
-              <AnimatePresence mode="wait">
-                {isSuccess ? (
-                  <motion.div
-                    key="success"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="text-center py-10"
-                  >
-                    <motion.div 
-                      animate={{ 
-                        scale: [1, 1.1, 1],
-                      }}
-                      transition={{ duration: 1, ease: "easeInOut", times: [0, 0.5, 1] }}
-                      className="mx-auto mb-6 w-20 h-20 rounded-full bg-gradient-to-r from-primary-800 to-primary-600 flex items-center justify-center"
-                    >
-                      <CheckCircle className="text-white" size={40} />
-                    </motion.div>
-                    <h3 className="heading-md mb-2 text-primary-400">You're on the list!</h3>
-                    <p className="text-gray-400 mb-4">
-                      Thanks for joining! You're at position <span className="text-primary-300 font-bold">#{formData.waitlistRank}</span> in the waitlist.
-                    </p>
-                    <p className="text-gray-400">
-                      We'll be in touch soon with updates about SkillPod. Check your email for a confirmation.
-                    </p>
-                  </motion.div>
-                ) : (
-                  <form onSubmit={handleSubmit}>
-                    <AnimatePresence mode="wait">
-                      {renderStep()}
-                    </AnimatePresence>
-
-                    {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
+              {!isSuccess ? (
+                <form 
+                  onSubmit={handleSubmit}
+                >
+                  <AnimatePresence mode="wait">
+                    {renderStep()}
+                  </AnimatePresence>
+                  
+                  {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
+                  
+                  <div className="flex justify-between mt-8">
+                    {currentStep > 1 && (
+                      <Button 
+                        onClick={(e) => {
+                          e?.preventDefault();
+                          e?.stopPropagation();
+                          prevStep();
+                        }}
+                        variant="secondary"
+                        type="button"
+                      >
+                        <ChevronLeft size={18} className="mr-1" /> Back
+                      </Button>
+                    )}
                     
-                    <div className="flex justify-between mt-8">
-                      {currentStep > 1 ? (
-                        <Button 
-                          variant="secondary" 
-                          onClick={prevStep}
-                          type="button"
-                        >
-                          <ChevronLeft size={18} className="mr-1" /> Back
-                        </Button>
-                      ) : (
-                        <div></div>
-                      )}
-                      
+                    <div className="ml-auto">
                       {currentStep < 4 ? (
                         <Button 
-                          onClick={nextStep}
+                          onClick={(e) => {
+                            e?.preventDefault();
+                            e?.stopPropagation();
+                            nextStep();
+                          }}
                           disabled={
-                            (currentStep === 1 && (!formData.name || !formData.email)) || 
+                            (currentStep === 1 && (!formData.name || !formData.email || !!errors.name || !!errors.email)) || 
                             (currentStep === 2 && formData.learningSkills.length === 0) ||
                             (currentStep === 3 && formData.wantsToTeach && formData.teachingSkills.length === 0)
                           }
@@ -809,7 +940,7 @@ const WaitlistForm = () => {
                         </Button>
                       ) : (
                         <Button 
-                          type="submit" 
+                          type="submit"
                           disabled={isSubmitting}
                         >
                           {isSubmitting ? (
@@ -822,9 +953,49 @@ const WaitlistForm = () => {
                         </Button>
                       )}
                     </div>
-                  </form>
-                )}
-              </AnimatePresence>
+                  </div>
+                </form>
+              ) : (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-center py-10"
+                >
+                  <motion.div 
+                    animate={{ 
+                      scale: [1, 1.1, 1],
+                    }}
+                    transition={{ duration: 1, ease: "easeInOut", times: [0, 0.5, 1] }}
+                    className="mx-auto mb-6 w-20 h-20 rounded-full bg-gradient-to-r from-primary-800 to-primary-600 flex items-center justify-center"
+                  >
+                    <CheckCircle className="text-white" size={40} />
+                  </motion.div>
+                  <h3 className="heading-lg mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-300 to-gray-400">
+                    You're on the waitlist!
+                  </h3>
+                  <p className="text-gray-300 max-w-md mx-auto mb-6">
+                    Your waitlist position is <span className="text-primary-400 font-semibold">#{formData.waitlistRank}</span>. We've sent a confirmation email to <span className="text-primary-400">{formData.email}</span> with more details.
+                  </p>
+                  <div className="flex flex-col sm:flex-row justify-center gap-4">
+                    <Button 
+                      variant="primary"
+                      onClick={() => window.open('https://twitter.com/Skill_Pod', '_blank')}
+                      type="button"
+                    >
+                      <Twitter size={18} className="mr-2" /> Follow on Twitter
+                    </Button>
+                    <Button 
+                      variant="secondary"
+                      onClick={() => window.open('https://t.me/skill_pod', '_blank')}
+                      type="button"
+                    >
+                      <Send size={18} className="mr-2" /> Join Telegram
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
             </div>
           </div>
         </motion.div>

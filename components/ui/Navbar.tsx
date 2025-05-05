@@ -39,7 +39,8 @@ const Navbar = () => {
           <NavLink href="#categories">Skills</NavLink>
           <NavLink href="#teaching">Teach</NavLink>
           <NavLink href="#about">About</NavLink>
-          <Button size="sm">Join Waitlist</Button>
+          <NavLink href="#collaborate">Collaborate</NavLink>
+          <Button size="sm" href="#waitlist">Join Waitlist</Button>
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -67,7 +68,8 @@ const Navbar = () => {
               <NavLink href="#categories" mobile onClick={() => setIsMobileMenuOpen(false)}>Skills</NavLink>
               <NavLink href="#teaching" mobile onClick={() => setIsMobileMenuOpen(false)}>Teach</NavLink>
               <NavLink href="#about" mobile onClick={() => setIsMobileMenuOpen(false)}>About</NavLink>
-              <Button>Join Waitlist</Button>
+              <NavLink href="#collaborate" mobile onClick={() => setIsMobileMenuOpen(false)}>Collaborate</NavLink>
+              <Button onClick={() => setIsMobileMenuOpen(false)} href="#waitlist">Join Waitlist</Button>
             </div>
           </motion.div>
         )}

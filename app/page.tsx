@@ -8,6 +8,7 @@ import WhyNow from '@/sections/WhyNow';
 import Footer from '@/sections/Footer';
 import PopularSkills from '@/sections/PopularSkills';
 import SkillLottieShowcase from '@/sections/SkillLottieShowcase';
+import Collaborators from '@/sections/Collaborators';
 
 export default function Home() {
   return (
@@ -31,6 +32,9 @@ export default function Home() {
         </div>
         <div id="about">
           <WhyNow />
+        </div>
+        <div id="collaborate">
+          <Collaborators />
         </div>
         <Footer />
       </main>
