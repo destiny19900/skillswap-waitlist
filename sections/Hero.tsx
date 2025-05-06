@@ -125,7 +125,7 @@ const Hero = () => {
               Whether you're a coding wizard, design guru, or cooking expert...
             </p>
             <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
-              Join early users of SkillSwap — where your knowledge becomes real income.
+              Join early users of SkillPod — where your knowledge becomes real income.
             </p>
           </motion.div>
           

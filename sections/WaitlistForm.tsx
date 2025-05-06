@@ -26,19 +26,6 @@ interface FormData {
   invitedFriends: boolean;
 }
 
-const initialFormState: FormData = {
-  name: '',
-  email: '',
-  learningSkills: [],
-  teachingSkills: [],
-  wantsToTeach: false,
-  waitlistRank: Math.floor(Math.random() * 980) + 3020, // Between 3020-4000
-  points: 0,
-  sharedTwitter: false,
-  joinedDiscord: false,
-  invitedFriends: false,
-};
-
 // Sample skills for dropdown
 const skillOptions = [
   "Web Development", "Python", "React", "Graphic Design", "Video Editing",
@@ -49,7 +36,22 @@ const skillOptions = [
 ];
 
 const WaitlistForm = () => {
-  const { incrementWaitlistCount } = useWaitlist();
+  const { incrementWaitlistCount, waitlistCount } = useWaitlist();
+  
+  // Define initialFormState inside the component to access waitlistCount
+  const initialFormState: FormData = {
+    name: '',
+    email: '',
+    learningSkills: [],
+    teachingSkills: [],
+    wantsToTeach: false,
+    waitlistRank: waitlistCount, // Use current count as initial rank
+    points: 0,
+    sharedTwitter: false,
+    joinedDiscord: false,
+    invitedFriends: false,
+  };
+  
   const [formData, setFormData] = useState<FormData>(initialFormState);
   const [currentStep, setCurrentStep] = useState<FormStep>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -310,7 +312,7 @@ const WaitlistForm = () => {
             key="step1"
             className="space-y-5"
           >
-            <h3 className="text-xl text-white font-medium mb-4">Who Are You?</h3>
+            <h3 className="text-lg sm:text-xl text-white font-medium mb-3 sm:mb-4">Who Are You?</h3>
             <Input
               id="name"
               label="Name"
@@ -375,7 +377,7 @@ const WaitlistForm = () => {
             key="step2"
             className="space-y-5"
           >
-            <h3 className="text-xl text-white font-medium mb-4">What Do You Want to Learn?</h3>
+            <h3 className="text-lg sm:text-xl text-white font-medium mb-3 sm:mb-4">What Do You Want to Learn?</h3>
             <div className="relative">
               <div className="flex items-center relative">
                 <Search className="absolute left-3 text-gray-400" size={18} />
@@ -384,7 +386,7 @@ const WaitlistForm = () => {
                   value={skillInput}
                   onChange={handleSkillInput}
                   placeholder="Search skills or add your own"
-                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-dark-600 border border-dark-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 text-white placeholder-gray-400 focus:text-white focus:bg-dark-600"
+                  className="w-full pl-10 pr-4 py-2 sm:py-3 rounded-lg bg-dark-600 border border-dark-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 text-white placeholder-gray-400 focus:text-white focus:bg-dark-600 text-sm sm:text-base form-input"
                   style={{
                     WebkitTextFillColor: 'currentcolor',
                     caretColor: 'white',
@@ -406,7 +408,7 @@ const WaitlistForm = () => {
                     filteredSkills.map((skill) => (
                       <div
                         key={skill}
-                        className="px-4 py-2 hover:bg-dark-600 cursor-pointer text-gray-300 hover:text-white transition-colors"
+                        className="px-4 py-2 hover:bg-dark-600 cursor-pointer text-gray-300 hover:text-white transition-colors dropdown-item text-sm"
                         onClick={() => addSkill(skill, 'learning')}
                       >
                         {skill}
@@ -423,16 +425,16 @@ const WaitlistForm = () => {
 
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-300 mb-2">Selected Skills</label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1 sm:gap-2">
                 {formData.learningSkills.length > 0 ? (
                   formData.learningSkills.map(skill => (
-                    <div key={skill} className="bg-primary-900/30 text-primary-300 px-3 py-1 rounded-full text-sm flex items-center">
+                    <div key={skill} className="bg-primary-900/30 text-primary-300 px-2 py-1 rounded-full text-xs flex items-center whitespace-nowrap skill-tag mb-1">
                       {skill}
                       <button 
                         onClick={() => removeSkill(skill, 'learning')}
-                        className="ml-2 text-primary-300 hover:text-primary-200"
+                        className="ml-1 text-primary-300 hover:text-primary-200"
                       >
-                        <X size={14} />
+                        <X size={12} />
                       </button>
                     </div>
                   ))
@@ -454,7 +456,7 @@ const WaitlistForm = () => {
             key="step3"
             className="space-y-5"
           >
-            <h3 className="text-xl text-white font-medium mb-4">What Can You Teach Others?</h3>
+            <h3 className="text-lg sm:text-xl text-white font-medium mb-3 sm:mb-4">What Can You Teach Others?</h3>
             <p className="text-gray-400 text-sm mb-4">
               Even basic skills are valuable — you can get paid to teach them!
             </p>
@@ -467,7 +469,7 @@ const WaitlistForm = () => {
                   value={skillInput}
                   onChange={handleSkillInput}
                   placeholder="Search skills or add your own"
-                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-dark-600 border border-dark-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 text-white placeholder-gray-400 focus:text-white focus:bg-dark-600"
+                  className="w-full pl-10 pr-4 py-2 sm:py-3 rounded-lg bg-dark-600 border border-dark-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 text-white placeholder-gray-400 focus:text-white focus:bg-dark-600 text-sm sm:text-base form-input"
                   style={{
                     WebkitTextFillColor: 'currentcolor',
                     caretColor: 'white',
@@ -489,7 +491,7 @@ const WaitlistForm = () => {
                     filteredSkills.map((skill) => (
                       <div
                         key={skill}
-                        className="px-4 py-2 hover:bg-dark-600 cursor-pointer text-gray-300 hover:text-white transition-colors"
+                        className="px-4 py-2 hover:bg-dark-600 cursor-pointer text-gray-300 hover:text-white transition-colors dropdown-item text-sm"
                         onClick={() => addSkill(skill, 'teaching')}
                       >
                         {skill}
@@ -506,16 +508,16 @@ const WaitlistForm = () => {
 
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-300 mb-2">Selected Skills</label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1 sm:gap-2">
                 {formData.teachingSkills.length > 0 ? (
                   formData.teachingSkills.map(skill => (
-                    <div key={skill} className="bg-accent-900/30 text-accent-300 px-3 py-1 rounded-full text-sm flex items-center">
+                    <div key={skill} className="bg-accent-900/30 text-accent-300 px-2 py-1 rounded-full text-xs flex items-center whitespace-nowrap skill-tag mb-1">
                       {skill}
                       <button 
                         onClick={() => removeSkill(skill, 'teaching')}
-                        className="ml-2 text-accent-300 hover:text-accent-200"
+                        className="ml-1 text-accent-300 hover:text-accent-200"
                       >
-                        <X size={14} />
+                        <X size={12} />
                       </button>
                     </div>
                   ))
@@ -551,7 +553,7 @@ const WaitlistForm = () => {
             key="step4"
             className="space-y-5"
           >
-            <h3 className="text-xl text-white font-medium mb-4">Boost Your Waitlist Position</h3>
+            <h3 className="text-lg sm:text-xl text-white font-medium mb-3 sm:mb-4">Boost Your Waitlist Position</h3>
             
             {renderBoostSection()}
           </motion.div>
@@ -566,7 +568,9 @@ const WaitlistForm = () => {
     <div className="bg-dark-700/70 p-5 rounded-xl mb-6">
       <div className="flex justify-between items-center mb-3">
         <span className="text-gray-300">Current Position</span>
-        <span className="text-2xl font-bold text-primary-400">#{formData.waitlistRank}</span>
+        <span className="text-2xl font-bold text-primary-400">
+          #{formData.waitlistRank || waitlistCount}
+        </span>
       </div>
       
       <div className="mb-4">
@@ -605,13 +609,13 @@ const WaitlistForm = () => {
             formData.sharedTwitter 
               ? 'bg-primary-900/20 text-primary-300' 
               : 'bg-dark-600 hover:bg-dark-500 text-white'
-          } transition-colors`}
+          } transition-colors whitespace-nowrap overflow-hidden`}
         >
           <div className="flex items-center">
-            <Twitter className="mr-3" size={18} />
-            <span>Share on Twitter</span>
+            <Twitter className="mr-2 flex-shrink-0" size={16} />
+            <span className="text-sm">Share on Twitter</span>
           </div>
-          <span className={formData.sharedTwitter ? 'text-primary-300' : 'text-primary-400'}>
+          <span className={`${formData.sharedTwitter ? 'text-primary-300' : 'text-primary-400'} text-xs ml-1 flex-shrink-0`}>
             {formData.sharedTwitter ? 'Completed +25pts' : '+25 pts'}
           </span>
         </button>
@@ -623,13 +627,13 @@ const WaitlistForm = () => {
             formData.joinedDiscord 
               ? 'bg-primary-900/20 text-primary-300' 
               : 'bg-dark-600 hover:bg-dark-500 text-white'
-          } transition-colors`}
+          } transition-colors whitespace-nowrap overflow-hidden`}
         >
           <div className="flex items-center">
-            <Send className="mr-3" size={18} />
-            <span>Join our Telegram Channel</span>
+            <Send className="mr-2 flex-shrink-0" size={16} />
+            <span className="text-sm">Join Telegram</span>
           </div>
-          <span className={formData.joinedDiscord ? 'text-primary-300' : 'text-primary-400'}>
+          <span className={`${formData.joinedDiscord ? 'text-primary-300' : 'text-primary-400'} text-xs ml-1 flex-shrink-0`}>
             {formData.joinedDiscord ? 'Completed +15pts' : '+15 pts'}
           </span>
         </button>
@@ -647,13 +651,13 @@ const WaitlistForm = () => {
               formData.invitedFriends 
                 ? 'bg-primary-900/20 text-primary-300' 
                 : 'bg-dark-600 hover:bg-dark-500 text-white'
-            } transition-colors`}
+            } transition-colors whitespace-nowrap overflow-hidden`}
           >
             <div className="flex items-center">
-              <Share2 className="mr-3" size={18} />
-              <span>Invite friends</span>
+              <Share2 className="mr-2 flex-shrink-0" size={16} />
+              <span className="text-sm">Invite friends</span>
             </div>
-            <span className={formData.invitedFriends ? 'text-primary-300' : 'text-primary-400'}>
+            <span className={`${formData.invitedFriends ? 'text-primary-300' : 'text-primary-400'} text-xs ml-1 flex-shrink-0`}>
               {formData.invitedFriends ? 'Completed +30pts' : '+30 pts'}
             </span>
           </button>
@@ -776,6 +780,7 @@ const WaitlistForm = () => {
       // Validate form
       if (!formData.name || !formData.email) {
         setError('Please fill in all required fields');
+        setIsSubmitting(false);
         return;
       }
       
@@ -783,20 +788,32 @@ const WaitlistForm = () => {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
         setError('Please enter a valid email address');
+        setIsSubmitting(false);
         return;
       }
       
       // Validate skills
       if (formData.learningSkills.length === 0 && formData.teachingSkills.length === 0) {
         setError('Please add at least one skill you want to learn or teach');
+        setIsSubmitting(false);
         return;
       }
       
-      // Generate waitlist rank
-      const waitlistRank = Math.floor(Math.random() * (4000 - 3020 + 1)) + 3020;
-      
       // Calculate points
       const points = calculatePoints();
+      
+      // First, increment the global waitlist counter
+      // This will store the count in Firestore via API
+      let currentRank = waitlistCount + 1;
+      try {
+        // Wait for the incrementWaitlistCount function to complete
+        // This will update the counter in the database
+        await incrementWaitlistCount();
+        currentRank = waitlistCount + 1;
+      } catch (err) {
+        console.error('Error incrementing waitlist count:', err);
+        // Continue with local count if API increment fails
+      }
       
       // Submit to API
       const response = await fetch('/api/waitlist', {
@@ -806,12 +823,12 @@ const WaitlistForm = () => {
         },
         body: JSON.stringify({
           ...formData,
-          waitlistRank,
+          waitlistRank: currentRank,
           points,
           socialActions: {
-            sharedTwitter: false,
-            joinedDiscord: false,
-            invitedFriends: false
+            sharedTwitter: formData.sharedTwitter,
+            joinedDiscord: formData.joinedDiscord,
+            invitedFriends: formData.invitedFriends
           }
         }),
       });
@@ -822,17 +839,14 @@ const WaitlistForm = () => {
         throw new Error(data.error || 'Failed to submit form');
       }
       
-      // Increment the global waitlist counter
-      incrementWaitlistCount();
+      // Set the form data with the assigned rank
+      setFormData(prev => ({
+        ...prev,
+        waitlistRank: currentRank
+      }));
       
       // Show success state
       setIsSuccess(true);
-      
-      // Reset form
-      setFormData(initialFormState);
-      setCurrentStep(1);
-      setSkillInput('');
-      setShowSkillDropdown(false);
       
     } catch (err: any) {
       setError(err.message || 'An error occurred. Please try again.');
@@ -848,13 +862,13 @@ const WaitlistForm = () => {
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
-          className="max-w-2xl mx-auto premium-card overflow-hidden"
+          className="max-w-3xl mx-auto premium-card overflow-hidden w-full px-4 sm:px-0"
         >
           <div className="relative">
             {/* Background glow effect */}
             <div className="absolute -inset-1 bg-gradient-to-r from-primary-600/20 via-secondary-600/20 to-accent-500/20 rounded-2xl blur-lg opacity-50"></div>
             
-            <div className="relative p-8 md:p-12">
+            <div className="relative p-4 sm:p-6 md:p-8 lg:p-12">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -866,8 +880,8 @@ const WaitlistForm = () => {
                     <SparklesIcon className="text-accent-400" size={24} />
                   </div>
                 </div>
-                <h2 className="heading-lg mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-300 to-gray-400">
-                  Join the SkillSwap Waitlist
+                <h2 className="heading-lg mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-300 to-gray-400 text-2xl sm:text-3xl">
+                  Join the SkillPod Waitlist
                 </h2>
                 <p className="text-gray-400">
                   Be the first to experience a new way of learning and teaching skills that matter.
@@ -946,7 +960,7 @@ const WaitlistForm = () => {
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...
                             </span>
                           ) : (
-                            'Submit & Join Waitlist'
+                            'Join Waitlist'
                           )}
                         </Button>
                       )}
@@ -970,11 +984,13 @@ const WaitlistForm = () => {
                   >
                     <CheckCircle className="text-white" size={40} />
                   </motion.div>
-                  <h3 className="heading-lg mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-300 to-gray-400">
+                  <h3 className="heading-lg mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-300 to-gray-400 text-xl sm:text-2xl">
                     You're on the waitlist!
                   </h3>
                   <p className="text-gray-300 max-w-md mx-auto mb-6">
-                    Your waitlist position is <span className="text-primary-400 font-semibold">#{formData.waitlistRank}</span>. We've sent a confirmation email to <span className="text-primary-400">{formData.email}</span> with more details.
+                    Your waitlist position is <span className="text-primary-400 font-semibold">
+                      #{formData.waitlistRank || waitlistCount}
+                    </span>. We've sent a confirmation email to <span className="text-primary-400">{formData.email}</span> with more details.
                   </p>
                   <div className="flex flex-col sm:flex-row justify-center gap-4">
                     <Button 
@@ -998,6 +1014,44 @@ const WaitlistForm = () => {
           </div>
         </motion.div>
       </div>
+      
+      <style jsx global>{`
+        @media (max-width: 640px) {
+          .premium-card {
+            width: 100%;
+            max-width: 100%;
+          }
+          .heading-lg {
+            font-size: 1.5rem;
+            line-height: 1.3;
+          }
+          .text-gray-400 {
+            font-size: 0.9rem;
+          }
+          button, a {
+            white-space: nowrap;
+          }
+          .social-btn {
+            flex-shrink: 0;
+            padding: 0.5rem;
+          }
+          .form-input {
+            font-size: 0.9rem !important;
+          }
+          .skill-tag {
+            font-size: 0.7rem;
+            white-space: nowrap;
+            padding: 0.15rem 0.5rem;
+          }
+          .dropdown-item {
+            font-size: 0.85rem;
+            padding: 0.4rem 0.75rem;
+          }
+          .task-label {
+            font-size: 0.8rem;
+          }
+        }
+      `}</style>
     </section>
   );
 };

@@ -1,66 +1,98 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/utils/firebase-server';
-import { Firestore } from 'firebase-admin/firestore';
 
-// Base count to start with - this will be added to the actual count
-const BASE_COUNT = 3087;
+// Collection name for the counter
+const COUNTER_COLLECTION = 'system';
+const COUNTER_DOC = 'waitlist';
+const DEFAULT_COUNT = 3119;
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    // If adminDb is not available, return the base count for development
+    // Check if adminDb is initialized
     if (!adminDb) {
-      return NextResponse.json({ count: BASE_COUNT });
+      return NextResponse.json({ 
+        count: DEFAULT_COUNT,
+        error: 'Admin database not initialized' 
+      });
+    }
+
+    // Get the counter from Firestore
+    const counterRef = adminDb.collection(COUNTER_COLLECTION).doc(COUNTER_DOC);
+    const counterDoc = await counterRef.get();
+    
+    if (!counterDoc.exists) {
+      // Initialize the counter if it doesn't exist
+      await counterRef.set({
+        count: DEFAULT_COUNT,
+        lastUpdated: new Date().toISOString(),
+      });
+      
+      return NextResponse.json({
+        count: DEFAULT_COUNT,
+        isDefault: true,
+      });
     }
     
-    try {
-      // Get count of documents in the waitlist collection using admin SDK
-      const waitlistRef = adminDb.collection('waitlist');
-      const countQuery = waitlistRef.count();
-      const snapshot = await countQuery.get();
-      const actualCount = snapshot.data().count;
-      
-      // Add the base count to the actual count
-      const totalCount = BASE_COUNT + actualCount;
-      
-      // Get or create the global counter document
-      try {
-        const counterRef = adminDb.collection('system').doc('counters');
-        const counterDoc = await counterRef.get();
-        
-        if (!counterDoc.exists) {
-          // Create the counter document if it doesn't exist
-          await counterRef.set({
-            waitlistTotalCount: totalCount,
-            actualWaitlistCount: actualCount,
-            baseCount: BASE_COUNT,
-            lastUpdated: new Date()
-          });
-        } else {
-          // Update the counter document
-          await counterRef.update({
-            waitlistTotalCount: totalCount,
-            actualWaitlistCount: actualCount,
-            lastUpdated: new Date()
-          });
-        }
-      } catch (error) {
-        // Silently continue if counter update fails
-      }
-      
-      // Only return the total count to the client
-      return NextResponse.json({ count: totalCount });
-    } catch (firestoreError: any) {
-      // In development, return the base count on error
-      if (process.env.NODE_ENV === 'development') {
-        return NextResponse.json({ count: BASE_COUNT });
-      }
-      
-      throw firestoreError;
-    }
-  } catch (error: any) {
-    // For production, don't expose error details
+    const data = counterDoc.data();
+    return NextResponse.json({
+      count: data?.count || DEFAULT_COUNT,
+      lastUpdated: data?.lastUpdated,
+    });
+  } catch (error) {
+    console.error('Error fetching waitlist count:', error);
     return NextResponse.json(
-      { error: 'Failed to get waitlist count' },
+      { count: DEFAULT_COUNT, error: 'Failed to fetch count' },
+      { status: 500 }
+    );
+  }
+}
+
+// Add the ability to increment the counter
+export async function POST() {
+  try {
+    // Check if adminDb is initialized
+    if (!adminDb) {
+      return NextResponse.json({ 
+        error: 'Admin database not initialized' 
+      }, { status: 500 });
+    }
+
+    const counterRef = adminDb.collection(COUNTER_COLLECTION).doc(COUNTER_DOC);
+    
+    // Use a transaction to ensure accurate counting
+    const result = await adminDb.runTransaction(async (transaction) => {
+      const counterDoc = await transaction.get(counterRef);
+      
+      if (!counterDoc.exists) {
+        // Initialize with default+1 if not exists
+        transaction.set(counterRef, {
+          count: DEFAULT_COUNT + 1,
+          lastUpdated: new Date().toISOString(),
+        });
+        return DEFAULT_COUNT + 1;
+      }
+      
+      // Get current value and increment
+      const data = counterDoc.data();
+      const newCount = (data?.count || DEFAULT_COUNT) + 1;
+      
+      // Update document
+      transaction.update(counterRef, {
+        count: newCount,
+        lastUpdated: new Date().toISOString(),
+      });
+      
+      return newCount;
+    });
+    
+    return NextResponse.json({
+      count: result,
+      success: true,
+    });
+  } catch (error) {
+    console.error('Error incrementing waitlist count:', error);
+    return NextResponse.json(
+      { error: 'Failed to increment count' },
       { status: 500 }
     );
   }

@@ -10,8 +10,8 @@ type WaitlistContextType = {
 
 const WaitlistContext = createContext<WaitlistContextType | undefined>(undefined);
 
-// Default base count
-const DEFAULT_COUNT = 3087;
+// Update the default count to 3119
+const DEFAULT_COUNT = 3119;
 
 export function WaitlistProvider({ children }: { children: React.ReactNode }) {
   // Start with the fixed default value to avoid hydration mismatch
@@ -67,10 +67,15 @@ export function WaitlistProvider({ children }: { children: React.ReactNode }) {
         
         const data = await response.json();
         
-        if (data.count) {
-          setWaitlistCount(data.count);
-          localStorage.setItem('waitlistCount', data.count.toString());
-          localStorage.setItem('waitlistCountTimestamp', Date.now().toString());
+        // Handle the new API response format which returns a count field
+        if (data && typeof data.count === 'number') {
+          // Only update if the count from the API is higher than our current count
+          // This prevents the count from going down if we already incremented locally
+          if (data.count > waitlistCount) {
+            setWaitlistCount(data.count);
+            localStorage.setItem('waitlistCount', data.count.toString());
+            localStorage.setItem('waitlistCountTimestamp', Date.now().toString());
+          }
         }
       } catch (error) {
         // Silent error in production
@@ -87,15 +92,64 @@ export function WaitlistProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(intervalId);
   }, [isClient]);
 
-  const incrementWaitlistCount = () => {
-    setWaitlistCount(prevCount => {
-      const newCount = prevCount + 1;
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('waitlistCount', newCount.toString());
-        localStorage.setItem('waitlistCountTimestamp', Date.now().toString());
+  // Update the incrementWaitlistCount function to call the API
+  const incrementWaitlistCount = async () => {
+    try {
+      // Call the API to increment the count in Firestore
+      const response = await fetch('/api/waitlist/count', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`);
       }
-      return newCount;
-    });
+
+      const data = await response.json();
+      
+      // If API call was successful, update the local state with the new count
+      if (data.success && data.count) {
+        setWaitlistCount(data.count);
+        
+        // Save in localStorage for offline access
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('waitlistCount', data.count.toString());
+            localStorage.setItem('waitlistCountTimestamp', Date.now().toString());
+          } catch (error) {
+            // Silent error in production
+          }
+        }
+        return data.count;
+      } else {
+        // Fallback to local increment if API call failed but returned successfully
+        setWaitlistCount(prevCount => {
+          const newCount = prevCount + 1;
+          try {
+            localStorage.setItem('waitlistCount', newCount.toString());
+            localStorage.setItem('waitlistCountTimestamp', Date.now().toString());
+          } catch (error) {
+            // Silent error in production
+          }
+          return newCount;
+        });
+      }
+    } catch (error) {
+      // If API call fails completely, fallback to local increment
+      setWaitlistCount(prevCount => {
+        const newCount = prevCount + 1;
+        try {
+          localStorage.setItem('waitlistCount', newCount.toString());
+          localStorage.setItem('waitlistCountTimestamp', Date.now().toString());
+        } catch (error) {
+          // Silent error in production
+        }
+        return newCount;
+      });
+    }
   };
 
   return (
